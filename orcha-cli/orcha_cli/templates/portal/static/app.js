@@ -489,7 +489,7 @@ window.Orcha = (function () {
         </a>
         <div class="aut-wrap" id="autWrap">
           <span class="aut-lab">autonomy</span>
-          <div class="aut" id="autTop" role="radiogroup" aria-label="Container autonomy"></div>
+          <div class="aut" id="autTop"></div>
         </div>
         <div class="acting" title="You are the human authority on this container">
           <span class="lbl">acting as</span>
@@ -579,20 +579,18 @@ window.Orcha = (function () {
     const level = autLevel();
     const canAct = !!actingHuman();
     host.classList.toggle("locked", !canAct);
-    host.innerHTML = AUT_RUNGS.map((rg) => {
-      if (rg.r === 0) {
-        // the live binary: Paused (red) vs Running (neutral green), always lit
-        const cls = paused ? "seg paused on" : "seg run on";
-        const lab = paused ? "Paused" : "Running";
-        const tip = canAct
-          ? (paused ? "Wakes are OFF — click to resume" : "Wakes are ON — click to pause all agent wakes")
-          : "Pick an acting human to change autonomy";
-        return `<span class="${cls}" data-rung="0" role="radio" aria-checked="true"
-          title="${esc(tip)}"><span class="d"></span>${esc(lab)}</span>`;
-      }
-      // rungs 1-3: the engine autonomy level (plan|pr|full). The active level lights in its
-      // spec tone; the rest stay selectable. Orthogonal to rung 0 — the level renders the same
-      // whether wakes are paused or running.
+    // Rung 0 — the live on/off toggle (role="switch", independent of the level radiogroup so
+    // it cannot appear "selected" alongside a level rung in the same radiogroup).
+    const cls0 = paused ? "seg paused on" : "seg run on";
+    const lab0 = paused ? "Paused" : "Running";
+    const tip0 = canAct
+      ? (paused ? "Wakes are OFF — click to resume" : "Wakes are ON — click to pause all agent wakes")
+      : "Pick an acting human to change autonomy";
+    const rung0Html = `<span class="${cls0}" data-rung="0" role="switch" aria-checked="${!paused}"
+      title="${esc(tip0)}"><span class="d"></span>${esc(lab0)}</span>`;
+    // Rungs 1-3 — the engine autonomy level (plan|pr|full), wrapped in their own radiogroup so
+    // only one level can appear selected at a time, separate from the toggle above.
+    const levelHtml = AUT_RUNGS.slice(1).map((rg) => {
       const active = rg.level === level;
       const cls = "seg lvl " + rg.tone + (active ? " on" : "");
       const tip = canAct
@@ -601,6 +599,8 @@ window.Orcha = (function () {
       return `<span class="${cls}" data-rung="${rg.r}" role="radio" aria-checked="${active}"
         title="${esc(tip)}"><span class="d"></span>${esc(rg.label)}</span>`;
     }).join("");
+    host.innerHTML = rung0Html +
+      `<div role="radiogroup" aria-label="Autonomy level" style="display:contents">${levelHtml}</div>`;
     host.querySelectorAll(".seg").forEach((seg) => {
       seg.onclick = () => onAutClick(+seg.dataset.rung);
     });

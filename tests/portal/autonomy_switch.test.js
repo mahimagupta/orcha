@@ -350,6 +350,29 @@ async function run() {
     assert(/\baccent\b/.test(r3._class) && /\bon\b/.test(r3._class), "poll: 'full' (rung 3) now lit");
   }
 
+  // --- Case 17: ARIA semantics — rung 0 is a switch, level group is its own radiogroup ---
+  // Regression guard for the double-highlight bug: rung 0 always had `on` AND the active level
+  // rung also had `on` inside ONE role=radiogroup — two items appeared selected simultaneously.
+  // Fix: rung 0 uses role=switch (independent toggle); rungs 1-3 get their own role=radiogroup.
+  {
+    console.log("\nCase 17: ARIA semantics — no double-selected-in-one-radiogroup (regression guard)");
+    const s = makeSandbox();
+    s.Orcha.applySnapshot({ container: { id: "c1", wakes_enabled: true, autonomy_level: "plan" }, agents: [human], tasks: [], requests: [] });
+    const html = s.reg.autTop.innerHTML;
+    // rung 0 must be role="switch", not role="radio"
+    const rung0Match = html.match(/data-rung="0"[^>]*role="([^"]+)"/);
+    assert(rung0Match && rung0Match[1] === "switch", "rung 0 uses role=switch (not radio)");
+    // level rungs must be wrapped in their own role="radiogroup"
+    assert(/role="radiogroup"/.test(html), "a role=radiogroup exists for the level rungs");
+    // no role="radio" element with aria-checked="true" exists alongside another —
+    // count aria-checked="true" on role="radio" elements: exactly one (the active level rung)
+    const radioCheckedTrue = (html.match(/role="radio"[^>]*aria-checked="true"/g) || []).length
+                           + (html.match(/aria-checked="true"[^>]*role="radio"/g) || []).length;
+    assert(radioCheckedTrue <= 1, "at most one role=radio element is aria-checked=true at a time");
+    // rung 0 must NOT be role="radio" (would cause two checked items in old single radiogroup)
+    assert(!/data-rung="0"[^>]*role="radio"/.test(html), "rung 0 is NOT role=radio");
+  }
+
   console.log("\n" + (failures === 0 ? "ALL PASSED ✅" : failures + " FAILED ❌"));
   process.exit(failures === 0 ? 0 : 1);
 }
