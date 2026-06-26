@@ -324,6 +324,14 @@ AVAILABLE_MODELS = [
     {"id": "gpt-5.4", "name": "GPT-5.4", "runtime": "codex"},
     {"id": "gpt-5.4-mini", "name": "GPT-5.4 mini", "runtime": "codex"},
     {"id": "gpt-5.3-codex-spark", "name": "GPT-5.3 Codex Spark", "runtime": "codex"},
+    # xAI Grok rides the `codex` runtime: xAI's API is OpenAI wire-compatible, so the host's
+    # codex CLI can drive it once its config (~/.codex/config.toml) defines an xAI model
+    # provider (base_url https://api.x.ai/v1, env_key XAI_API_KEY) and these ids resolve to it.
+    # No notifier change — resolve_model_runtime() returns "codex" and the existing codex spawn
+    # path (codex exec --model grok-4 …) handles it. Confirm ids at https://docs.x.ai/docs/models.
+    {"id": "grok-4", "name": "Grok 4", "runtime": "codex"},
+    {"id": "grok-4-fast", "name": "Grok 4 Fast", "runtime": "codex"},
+    {"id": "grok-3-mini", "name": "Grok 3 Mini", "runtime": "codex"},
 ]
 DEFAULT_MODEL = "claude-opus-4-8"
 _MODEL_IDS = {m["id"] for m in AVAILABLE_MODELS}
